@@ -1,0 +1,50 @@
+---
+title: "Dynamic Graphs"
+author: "Samantha Roloff"
+date: "2022-09-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This polling data is from 538. https://github.com/fivethirtyeight/data/tree/master/election-forecasts-2022. 
+
+I'd like to show the current polling for the outcome of the 2022 governorship races across the United States. 
+
+The functionality I built in was a hover to be able to hover over individual data points and see the district, date and chance that the Democratic party wins the governorship. Additionally, one is able to doubleclick on a state in the legend to isolate the polling history for just that state. 
+
+This graph is reproducible if one downloads the same data set from the link above, albeit with a few more polling dates. 
+
+Future improvements could add a zoom in feature, especially to zoom in on the chances close to 50% (0.50), like Arizona and Kansas, where the state moves from Republican to Democratic governor around August, 2022. 
+
+```{r cars}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+gov_df<-readr::read_csv('governor_state_toplines_2022.csv', show_col_types = FALSE)
+
+head(gov_df)
+dim(gov_df)
+#decide if the state is likely to have a democrat or republican governor
+gov_df$Governorship_leans <- with(gov_df, ifelse(winner_Rparty < winner_Dparty, 'Democrat', 'Republican'))
+
+# convert date field to date field
+gov_df$forecastdate <- as.Date(gov_df$forecastdate, format = "%m/%d/%Y" )
+#class(gov_df$forecastdate)
+
+#filter to expression field so we don't have duplicate entries/state
+gov_df_lite <- filter(gov_df, expression == '_lite')
+dim(gov_df_lite)
+head(gov_df_lite)
+
+
+
+#Question: By state, how has the chance of the gov seats changed over time?
+plot<-ggplot(data = gov_df_lite, aes(forecastdate, winner_Dparty, color = district))+geom_point()+ggtitle("How likely each state is to have a Democratic governor after the 2022 midterms.")+theme_bw()
+ggplotly(plot, tooltip = cbind('district', 'winner_Dparty', 'forecastdate'))
+
+```
+
